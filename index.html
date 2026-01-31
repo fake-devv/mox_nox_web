@@ -1,54 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Mox Nox</title>
-<link rel="stylesheet" href="index.css" />
-<script src="index.js" defer></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mox Nox</title>
+
+  <link rel="stylesheet" href="index.css" />
+  <script src="index.js" defer></script>
 </head>
 
 <body>
-<div id="app">
-  <h1>Mox Nox</h1>
+  <div id="app">
+    <h1>Mox Nox</h1>
+    <div id="header">
+      <!-- INPUTS -->
+      <div id="inputArea">
+        <input type="date" id="dobInput" value="2000-01-01" />
 
-  <div id="inputArea">
-    <input id="date_of_birth" placeholder="dd-MM-YYYY" />
-    
-    <select id="countrySelector">
-      <option value="US">United States</option>
-      <option value="UK">United Kingdom</option>
-      <option value="IN">India</option>
-      <option value="JP">Japan</option>
-      <option value="DE">Germany</option>
-      <option value="FR">France</option>
-      <option value="CN">China</option>
-      <option value="BR">Brazil</option>
-      <option value="ZA">South Africa</option>
-      <option value="RU">Russia</option>
-    </select>
+        <select id="countrySelector">
+          <option value="US">United States</option>
+          <option value="UK">United Kingdom</option>
+          <option value="IN">India</option>
+          <option value="JP">Japan</option>
+          <option value="DE">Germany</option>
+          <option value="FR">France</option>
+          <option value="CN">China</option>
+          <option value="BR">Brazil</option>
+          <option value="ZA">South Africa</option>
+          <option value="RU">Russia</option>
+        </select>
 
-    <select id="unitSelector">
-      <option value="years">Years</option>
-      <option value="weeks" selected>Weeks</option>
-      <option value="days">Days</option>
-    </select>
+        <select id="unitSelector">
+          <option value="years">Years</option>
+          <option value="weeks" selected>Weeks</option>
+          <option value="days">Days</option>
+        </select>
 
-    <button id="generateButton">Generate</button>
-  </div>
+        <button id="generateButton">Generate</button>
+      </div>
 
-  <div id="calendarWrapper">
-    <div id="lifeCalendar"></div>
-  </div>
+      <!-- EVENT ADDER -->
+      <div id="eventArea">
+        <input type="date" id="eventDate" />
+        <input type="text" id="eventLabel" placeholder="Completed Schooling" />
+        <button id="addEventBtn">Add Event</button>
+      </div>
 
-  <div id="legend">
-    <div class="legend-item">
-      <span class="cell lived"></span> Lived
+      <!-- TIMER -->
+      <div id="secondsLivedCard">
+        <div class="label" id="secondsTitle">Seconds lived</div>
+        <div id="secondsLived">0</div>
+        <div id="secondsToggle">
+          <span class="toggle-label">Lived</span>
+          <label class="switch">
+            <input type="checkbox" id="secondsModeToggle" />
+            <span class="slider"></span>
+          </label>
+          <span class="toggle-label">Left</span>
+        </div>
+      </div>
+
     </div>
-    <div class="legend-item">
-      <span class="cell remaining"></span> Remaining
+
+    <!-- CALENDAR -->
+    <div id="calendarWrapper">
+      <div id="lifeCalendar"></div>
     </div>
+
+    <!-- LEGEND -->
+    <div id="legend">
+      <div class="legend-item">
+        <span class="cell lived"></span> Lived
+      </div>
+      <div class="legend-item">
+        <span class="cell remaining"></span> Remaining
+      </div>
+      <div class="legend-item">
+        <span class="cell event"></span> Event
+      </div>
+    </div>
+    <div id="watermark">mox nox</div>
   </div>
-</div>
 </body>
+
 </html>
