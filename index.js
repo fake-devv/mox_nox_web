@@ -1,215 +1,203 @@
 /* ---------- DOM ---------- */
 
 const DOM = {
-  calendar: document.getElementById('lifeCalendar'),
-  generateBtn: document.getElementById('generateButton'),
-  dobInput: document.getElementById('date_of_birth'),
-  countrySelect: document.getElementById('countrySelector'),
-  unitSelect: document.getElementById('unitSelector'),
-
-  eventDate: document.getElementById('eventDate'),
-  eventLabel: document.getElementById('eventLabel'),
-  addEventBtn: document.getElementById('addEventBtn')
+    body: document.body,
+    calendar: document.getElementById('lifeCalendar'),
+    generateBtn: document.getElementById('generateButton'),
+    dobInput: document.getElementById('dobInput'),
+    countrySelect: document.getElementById('countrySelector'),
+    unitSelect: document.getElementById('unitSelector'),
+    secondsValue: document.getElementById('secondsLived'),
+    secondsToggle: document.getElementById('secondsModeToggle'),
+    secondsTitle: document.getElementById('secondsTitle'),
+    eventDate: document.getElementById('eventDate'),
+    eventLabel: document.getElementById('eventLabel'),
+    addEventBtn: document.getElementById('addEventBtn'),
 };
 
 /* ---------- CONSTANTS ---------- */
 
-const MS_PER_DAY = 1000 * 60 * 60 * 24;
+const MS_PER_DAY = 86400000;
 const DAYS_IN_YEAR = 365.25;
 
 /* ---------- STATE ---------- */
 
-const lifeEvents = [];
+const state = {
+    dob: null,
+    totalSeconds: 0,
+    secondsMode: 'lived', // lived | left
+    timerId: null,
+    events: []
+};
 
 /* ---------- EVENTS ---------- */
 
-DOM.generateBtn.addEventListener('click', handleGenerate);
-DOM.addEventBtn.addEventListener('click', handleAddEvent);
+DOM.generateBtn.addEventListener('click', generate);
+DOM.addEventBtn.addEventListener('click', addEvent);
+DOM.secondsToggle.addEventListener('change', toggleSecondsMode);
 
 /* ---------- MAIN ---------- */
 
-async function handleGenerate() {
-  clearCalendar();
+async function generate() {
+    clearCalendar();
+    state.dob = new Date(DOM.dobInput.value);
+    const unit = DOM.unitSelect.value;
+    const country = DOM.countrySelect.value;
 
-  const dobString = DOM.dobInput.value.trim();
-  if (!isValidDOB(dobString)) {
-    alert('Please enter a valid date of birth (dd-MM-YYYY)');
-    return;
-  }
+    const expectancy = await fetchLifeExpectancy(country);
+    const livedDays = daysBetween(state.dob, new Date());
+    const totalDays = Math.floor(expectancy * DAYS_IN_YEAR);
 
-  const dob = parseDate(dobString);
-  const unit = DOM.unitSelect.value;
-  const country = DOM.countrySelect.value;
+    state.totalSeconds = totalDays * 86400;
 
-  const expectancyYears = await fetchLifeExpectancy(country);
-  const livedDays = getDaysBetween(dob, new Date());
-  const totalDays = Math.floor(expectancyYears * DAYS_IN_YEAR);
+    renderCalendar(livedDays, totalDays, unit);
+    if (!state.timerId) startTimer();
 
-  renderCalendar({
-    livedDays,
-    totalDays,
-    unit,
-    dob
-  });
 }
 
-/* ---------- EVENT ADDER ---------- */
+/* ---------- TIMER ---------- */
 
-function handleAddEvent() {
-  const date = DOM.eventDate.value;
-  const label = DOM.eventLabel.value.trim();
+function startTimer() {
+    stopTimer();
 
-  if (!date || !label) {
-    alert('Please enter both event date and description');
-    return;
-  }
+    const dobSeconds = Math.floor(state.dob.getTime() / 1000);
 
-  lifeEvents.push({ date, label });
+    function tick() {
+        const now = Math.floor(Date.now() / 1000);
+        const lived = now - dobSeconds;
 
-  DOM.eventDate.value = '';
-  DOM.eventLabel.value = '';
+        const value =
+            state.secondsMode === 'lived'
+                ? lived
+                : Math.max(state.totalSeconds - lived, 0);
 
-  // Re-render if calendar already exists
-  if (DOM.calendar.children.length > 0) {
-    DOM.generateBtn.click();
-  }
+        DOM.secondsValue.textContent = value.toLocaleString();
+
+        DOM.secondsValue.classList.toggle('danger', state.secondsMode === 'left');
+        DOM.secondsValue.classList.add('tick');
+        setTimeout(() => DOM.secondsValue.classList.remove('tick'), 120);
+    }
+
+    tick();
+    state.timerId = setInterval(tick, 1000);
+}
+
+function stopTimer() {
+    if (state.timerId) clearInterval(state.timerId);
+}
+
+/* ---------- TOGGLE ---------- */
+
+function toggleSecondsMode() {
+    state.secondsMode = DOM.secondsToggle.checked ? 'left' : 'lived';
+
+    DOM.secondsTitle.textContent = state.secondsMode === 'left' ? 'Seconds left' : 'Seconds lived';
+
+    DOM.body.classList.toggle('countdown', state.secondsMode === 'left');
+
+    startTimer();
 }
 
 /* ---------- CALENDAR ---------- */
 
-function renderCalendar({ livedDays, totalDays, unit, dob }) {
-  const { livedUnits, totalUnits, columns } =
-    getUnitConfig(livedDays, totalDays, unit);
+function renderCalendar(livedDays, totalDays, unit) {
+    const cfg = unitConfig(livedDays, totalDays, unit);
 
-  DOM.calendar.style.gridTemplateColumns = `repeat(${columns}, 12px)`;
+    const lived = Math.floor(cfg.lived);
+    const total = Math.floor(cfg.total);
+    const columns = cfg.columns;
 
-  const fragment = document.createDocumentFragment();
-  const eventMap = buildEventMap(dob, unit);
+    DOM.calendar.style.gridTemplateColumns = `repeat(${columns}, 12px)`;
+    const frag = document.createDocumentFragment();
 
-  for (let i = 0; i < totalUnits; i++) {
-    const cell = createCell(i < livedUnits);
+    const eventMap = buildEventMap(unit);
 
-    if (eventMap.has(i)) {
-      cell.classList.add('event');
-      cell.dataset.tooltip = eventMap.get(i);
+    for (let i = 0; i < total; i++) {
+        const cell = document.createElement('div');
+        cell.className = `cell ${i < lived ? 'lived' : 'remaining'}`;
+
+        if (i === total - 1) {
+            cell.classList.add('final');
+            cell.dataset.tooltip = 'End of expected lifespan';
+        }
+
+        if (eventMap.has(i)) {
+            cell.classList.add('event');
+            cell.dataset.tooltip = eventMap.get(i);
+        }
+
+        frag.appendChild(cell);
     }
 
-    fragment.appendChild(cell);
-  }
-
-  DOM.calendar.appendChild(fragment);
+    DOM.calendar.appendChild(frag);
 }
 
-function getUnitConfig(livedDays, totalDays, unit) {
-  switch (unit) {
-    case 'days':
-      return {
-        livedUnits: livedDays,
-        totalUnits: totalDays,
-        columns: 60
-      };
-
-    case 'years':
-      return {
-        livedUnits: livedDays / DAYS_IN_YEAR,
-        totalUnits: totalDays / DAYS_IN_YEAR,
-        columns: 25
-      };
-
-    default: // weeks
-      return {
-        livedUnits: livedDays / 7,
-        totalUnits: totalDays / 7,
-        columns: 52
-      };
-  }
-}
-
-function createCell(isLived) {
-  const cell = document.createElement('div');
-  cell.className = `cell ${isLived ? 'lived' : 'remaining'}`;
-  return cell;
-}
-
-function clearCalendar() {
-  DOM.calendar.innerHTML = '';
-}
-
-/* ---------- EVENTS MAPPING ---------- */
-
-function buildEventMap(dob, unit) {
-  const map = new Map();
-
-  lifeEvents.forEach(ev => {
-    const index = getUnitIndex(dob, new Date(ev.date), unit);
-    if (index >= 0) {
-      map.set(index, ev.label);
+function unitConfig(livedDays, totalDays, unit) {
+    switch (unit) {
+        case 'days':
+            return { lived: livedDays, total: totalDays, columns: 60 };
+        case 'years':
+            return {
+                lived: livedDays / DAYS_IN_YEAR,
+                total: totalDays / DAYS_IN_YEAR,
+                columns: 25
+            };
+        default:
+            return { lived: livedDays / 7, total: totalDays / 7, columns: 52 };
     }
-  });
-
-  return map;
 }
 
-function getUnitIndex(dob, eventDate, unit) {
-  const diffDays = getDaysBetween(dob, eventDate);
+/* ---------- EVENTS ---------- */
 
-  switch (unit) {
-    case 'days':
-      return diffDays;
-    case 'years':
-      return Math.floor(diffDays / DAYS_IN_YEAR);
-    default:
-      return Math.floor(diffDays / 7);
-  }
+function addEvent() {
+    const date = DOM.eventDate.value;
+    const label = DOM.eventLabel.value.trim();
+
+    if (!date || !label) return alert('Event needs date & label');
+
+    state.events.push({ date: new Date(date), label });
+    DOM.eventDate.value = DOM.eventLabel.value = '';
+
+    generate();
 }
 
-/* ---------- DATE UTILS ---------- */
+function buildEventMap(unit) {
+    const map = new Map();
 
-function parseDate(dateString) {
-  const [day, month, year] = dateString.split('-').map(Number);
-  return new Date(year, month - 1, day);
+    state.events.forEach(ev => {
+        const days = daysBetween(state.dob, ev.date);
+        const index =
+            unit === 'days' ? days :
+                unit === 'years' ? Math.floor(days / DAYS_IN_YEAR) :
+                    Math.floor(days / 7);
+
+        if (index >= 0) map.set(index, ev.label);
+    });
+
+    return map;
 }
 
-function getDaysBetween(from, to) {
-  return Math.floor((to - from) / MS_PER_DAY);
-}
+/* ---------- UTILS ---------- */
 
-function isValidDOB(dobString) {
-  const [day, month, year] = dobString.split('-').map(Number);
-
-  if (
-    !day || !month || !year ||
-    year < 1900 ||
-    month < 1 || month > 12 ||
-    day < 1 || day > daysInMonth(month, year)
-  ) {
-    return false;
-  }
-
-  return parseDate(dobString) < new Date();
-}
-
-function daysInMonth(month, year) {
-  return new Date(year, month, 0).getDate();
+function daysBetween(a, b) {
+    return Math.floor((b - a) / MS_PER_DAY);
 }
 
 /* ---------- API ---------- */
 
 async function fetchLifeExpectancy(country) {
-  try {
-    const res = await fetch(
-      `https://api.worldbank.org/v2/country/${country}/indicator/SP.DYN.LE00.IN?format=json`
-    );
+    try {
+        const res = await fetch(
+            `https://api.worldbank.org/v2/country/${country}/indicator/SP.DYN.LE00.IN?format=json`
+        );
+        const data = await res.json();
+        for (const row of data?.[1] || []) {
+            if (row.value) return Math.round(row.value);
+        }
+    } catch { }
+    return 70;
+}
 
-    const data = await res.json();
-    for (const row of data?.[1] || []) {
-      if (row.value !== null) {
-        return Math.round(row.value);
-      }
-    }
-  } catch (err) {
-    console.warn('Life expectancy fetch failed:', err);
-  }
-
-  return 70;
+function clearCalendar() {
+    DOM.calendar.innerHTML = '';
 }
