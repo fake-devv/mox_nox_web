@@ -6,6 +6,8 @@
   --lived: #4caf50;
   --remaining: #2a2f55;
   --accent: #7c83ff;
+  --event: #ff9800;
+  --eventoutline: #ff7700;
 }
 
 * {
@@ -20,7 +22,7 @@ body {
   align-items: flex-start;
   padding-top: 40px;
   background: radial-gradient(circle at top, #1b1f3b, var(--bg));
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: system-ui, sans-serif;
   color: var(--text);
 }
 
@@ -34,34 +36,27 @@ body {
 
 h1 {
   margin: 0 0 16px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
 }
 
-/* ---------- INPUT AREA ---------- */
+/* INPUTS */
 
-#inputArea {
-  position: sticky;
-  top: 0;
-  background: var(--card);
+#inputArea,
+#eventArea {
   display: flex;
-  flex-wrap: wrap;
   gap: 12px;
-  padding-bottom: 16px;
-  z-index: 10;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
 }
 
-input, select, button {
+input,
+select,
+button {
   background: #0f132b;
   color: var(--text);
   border: 1px solid #2b2f55;
   padding: 10px 12px;
   border-radius: 8px;
   font-size: 14px;
-}
-
-input::placeholder {
-  color: var(--muted);
 }
 
 button {
@@ -71,27 +66,13 @@ button {
   font-weight: 600;
 }
 
-button:hover {
-  opacity: 0.9;
-}
-
-/* ---------- CALENDAR ---------- */
+/* CALENDAR */
 
 #calendarWrapper {
   margin-top: 20px;
   max-height: 600px;
   overflow-y: auto;
-  padding-right: 6px;
   border-top: 1px solid #2b2f55;
-}
-
-#calendarWrapper::-webkit-scrollbar {
-  width: 6px;
-}
-
-#calendarWrapper::-webkit-scrollbar-thumb {
-  background: #3a3f70;
-  border-radius: 4px;
 }
 
 #lifeCalendar {
@@ -106,6 +87,7 @@ button:hover {
   width: 12px;
   height: 12px;
   border-radius: 3px;
+  position: relative;
 }
 
 .cell.lived {
@@ -116,7 +98,36 @@ button:hover {
   background: var(--remaining);
 }
 
-/* ---------- LEGEND ---------- */
+.cell.event {
+  outline: 1px solid var(--eventoutline);
+    background: var(--event);
+}
+
+/* TOOLTIP */
+
+.cell.event::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 150%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #222;
+  color: #fff;
+  padding: 4px 8px;
+  font-size: 11px;
+  white-space: nowrap;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+  z-index: 10;
+}
+
+.cell.event:hover::after {
+  opacity: 1;
+}
+
+/* LEGEND */
 
 #legend {
   margin-top: 16px;
