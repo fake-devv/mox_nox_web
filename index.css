@@ -7,7 +7,6 @@
     --remaining: #2a2f55;
     --accent: #7c83ff;
     --event: #ff9800;
-    --eventoutline: #ff7700;
 }
 
 * {
@@ -101,13 +100,59 @@ button {
     padding: 8px 10px;
     border-radius: 8px;
     font-size: 14px;
+    font-variant-numeric: tabular-nums;
+    transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
 }
 
+input,select,button:hover {
+   border-color: #3a4090;
+}
+input,select,button:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124, 131, 255, 0.25);
+  background: linear-gradient(180deg, #141a45, #10153a);
+}
 button {
     background: linear-gradient(135deg, var(--accent), #5a60ff);
     border: none;
     cursor: pointer;
     font-weight: 600;
+}
+
+input[type="date"] {
+  color-scheme: dark;
+  appearance: none;
+  -webkit-appearance: none;
+
+  background: linear-gradient(180deg, #11163a, #0f132b);
+  color: var(--text);
+
+  border: 1px solid #2b2f55;
+  border-radius: 10px;
+
+  padding: 10px 12px;
+  padding-right: 40px; /* room for calendar icon */
+
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+
+  transition:
+    border-color 0.25s ease,
+    box-shadow 0.25s ease,
+    background 0.25s ease;
+}
+#app input[type="date"]:hover {
+  border-color: #3a4090;
+}
+#app input[type="date"]:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(124, 131, 255, 0.25);
+  background: linear-gradient(180deg, #141a45, #10153a);
 }
 
 /* CALENDAR */
@@ -121,15 +166,15 @@ button {
 
 #lifeCalendar {
     display: grid;
-    gap: 3px;
+    gap: 6px;
     justify-content: center;
     min-width: 720px;
-    padding-top: 16px;
+    padding: 20px 0;
 }
 
 .cell {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     border-radius: 3px;
     position: relative;
 }
@@ -143,7 +188,6 @@ button {
 }
 
 .cell.event {
-    outline: 1px solid var(--eventoutline);
     background: var(--event);
 }
 
@@ -152,6 +196,9 @@ button {
     box-shadow: 0 0 8px rgba(255, 77, 77, 0.35);
     animation: finalPulse 1.5s infinite alternate;
     animation-play-state: paused;
+    /* to keep the tooltip always visible */
+    pointer-events: auto;
+    z-index: 20;
 }
 
 
@@ -174,26 +221,58 @@ button {
 
 /* TOOLTIP */
 
-.cell.event::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 150%;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #222;
-    color: #fff;
-    padding: 4px 8px;
-    font-size: 11px;
-    white-space: nowrap;
-    border-radius: 4px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s;
-    z-index: 10;
+.cell[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 160%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: linear-gradient(135deg, #1f244a, #0f132b);
+  color: #fff;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+  border-radius: 8px;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    transform 0.2s ease;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 50;
 }
 
-.cell.event:hover::after {
-    opacity: 1;
+.cell[data-tooltip]:hover::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.cell[data-tooltip]::before {
+  content: "";
+  position: absolute;
+  bottom: 140%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: #1f244a;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  pointer-events: none;
+  z-index: 49;
+}
+
+.cell[data-tooltip]:hover::before {
+  opacity: 1;
+}
+
+.cell.final[data-tooltip]::after {
+  background: linear-gradient(135deg, #3a1414, #1a0f12);
+  box-shadow:
+    0 0 24px rgba(255, 77, 77, 0.35),
+    inset 0 0 0 1px rgba(255, 77, 77, 0.25);
 }
 
 /* LEGEND */

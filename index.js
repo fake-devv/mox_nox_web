@@ -41,6 +41,14 @@ DOM.secondsToggle.addEventListener('change', toggleSecondsMode);
 async function generate() {
     clearCalendar();
     state.dob = new Date(DOM.dobInput.value);
+    if(state.dob > new Date()) {
+        return alert('If you are from the future, please come back later. 😊');
+    }
+    // if the age is older than 125 years, alert and return
+    const ageInYears = (new Date() - state.dob) / (MS_PER_DAY * DAYS_IN_YEAR);
+    if(ageInYears > 125) {
+        return alert('I doubt anyone lives that long! and if you do you don\'t need this calendar. 😊');
+    }
     const unit = DOM.unitSelect.value;
     const country = DOM.countrySelect.value;
 
@@ -118,7 +126,7 @@ function renderCalendar(livedDays, totalDays, unit) {
 
         if (i === total - 1) {
             cell.classList.add('final');
-            cell.dataset.tooltip = 'End of expected lifespan';
+            cell.dataset.tooltip = 'End of the road son 😎';
         }
 
         if (eventMap.has(i)) {
